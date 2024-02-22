@@ -86,25 +86,28 @@ async function publishIssueToNostr() {
   // TODO: clean up input validation
 
   try {
-    const token = core.getInput("token");
+    const token = process.env.GITHUB_TOKEN || core.getInput("token");
     if (!token) {
       core.setFailed("token input is required");
       return;
     }
-    const repo = core.getInput("repo").split("/");
+    // let repo = process. core.getInput("repo").split("/");
+    let repo: string | string[] = process.env.REPO || core.getInput("repo");
+    repo = repo.split("/");
     if (repo.length !== 2 || !repo[0] || !repo[1]) {
       core.setFailed("repo input is invalid");
       return;
     }
 
-    let issueNumber: string | number = core.getInput("issue_number");
+    let issueNumber: string | number =
+      process.env.ISSUE_NUMBER || core.getInput("issue_number");
     if (!issueNumber || isNaN(parseInt(issueNumber))) {
       core.setFailed("issue_number input is required");
       return;
     }
     issueNumber = parseInt(issueNumber);
 
-    let nsec = core.getInput("nsec");
+    let nsec = process.env.NSEC || core.getInput("nsec");
     if (!nsec) {
       core.setFailed("nsec input is required");
       return;
@@ -118,7 +121,7 @@ async function publishIssueToNostr() {
 
     let sk = decodeResult.data as Uint8Array;
 
-    let kind: string | number = core.getInput("kind");
+    let kind: string | number = process.env.KIND || core.getInput("kind");
 
     if (!kind || isNaN(parseInt(kind))) {
       core.setFailed("kind input is required");
@@ -129,7 +132,7 @@ async function publishIssueToNostr() {
 
     let tags: undefined | string | string[][];
     try {
-      tags = core.getInput("tags");
+      tags = process.env.TAGS || core.getInput("tags");
       tags = JSON.parse(tags) as string[][];
     } catch (error: any) {
       core.setFailed("tags input is invalid");
@@ -138,7 +141,7 @@ async function publishIssueToNostr() {
 
     let relays: undefined | string | string[];
     try {
-      relays = core.getInput("relays");
+      relays = process.env.RELAYS || core.getInput("relays");
       relays = JSON.parse(relays) as string[];
     } catch (error: any) {
       core.setFailed("relays input is invalid");
@@ -152,7 +155,9 @@ async function publishIssueToNostr() {
 
     const issue = await getIssue(token, repo[0], repo[1], issueNumber);
 
-    console.log(`Issue: ${issue}`);
+    tags = tags.concat(issue.tags);
+
+    console.log("tags: ", tags);
 
     let eventTemplate = {
       kind: kind,
@@ -169,9 +174,10 @@ async function publishIssueToNostr() {
     console.log("signed event: ", signedEvent);
 
     const pool = new SimplePool();
-    // const publishedEvent = await Promise.any(pool.publish(relays, signedEvent));
+    const publishedEvent = await Promise.any(pool.publish(relays, signedEvent));
 
     console.log("published to at least one relay!");
+    console.log("published event: ", publishedEvent);
 
     pool.close(relays);
 
