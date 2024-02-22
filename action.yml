@@ -1,4 +1,4 @@
-name: "Publish Issue to Nostr"
+name: "Publish GitHub Issue to Nostr"
 branding:
   icon: send
   color: purple
