@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Publish Issue to Nostr
-        uses: ChristianChiarulli/nostr-issues-test@v0.0.9
+        uses: Resolvr-io/nostr-issues-test@v0.0.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.repository }}
